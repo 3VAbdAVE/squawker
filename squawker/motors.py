@@ -132,9 +132,9 @@ class BodyController():
     """
     def __init__(self, body_switch = 6, body_motor = kit.motor2):
         self.body_switch = body_switch
+        self.body_motor = body_motor
         self.body_motor.FAST_DECAY = 0
         self.body_motor.SLOW_DECAY = 1
-        self.body_motor = body_motor
         self.body_motor.throttle = 0
         self.timeposition = 0
         GPIO.setup(body_switch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
