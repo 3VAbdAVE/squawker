@@ -6,13 +6,13 @@ After=ssh.service
 Type=simple
 User=pi
 Group=pi
-WorkingDirectory=/home/pi
+WorkingDirectory=/opt/squawker
 Restart=always
 RestartSec=10
-PIDFile=/var/run/squawkers.pid
+PIDFile=/run/squawkers.pid
 ExecStart=/opt/squawker/squawker/run.py /opt/squawker/sounds
-ExexStopPost=/opt/squawker/killmotors.py 
-
+ExexStopPost=/opt/squawker/killmotors.py
+StandardOutput=journal
 
 [Install]
 WantedBy=default.target
