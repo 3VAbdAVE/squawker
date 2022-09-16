@@ -104,15 +104,21 @@ async def sounds(directory, body, beak, q: asyncio.Queue) -> None:
         print(f'Sound activation in {str(slp)}\n')
         await asyncio.sleep(slp)
         
+async def main(body, beak, sounddir):
+    q = asyncio.Queue()
+    eye_task = asyncio.create_task(eyeblinking(beak, q))
+    body_task = asyncio.create_task(ambientMotion(body, q))
+    sound_task = asyncio.create_task(sounds(sounddir, body, beak, q))
+    await asyncio.gather(eye_task, body_task, sound_task)
+
 if __name__ == '__main__':
     args = parseArgs()
     sounddir = args.sounddir
     beak = motors.EyeBeakController()
     body = motors.BodyController()
-    squawk = sound.Squawk(beak, body)
     
     register_handler([beak, body])
-      
+    
     sleep(1)
     
     print("Initialize motors to a known position")
@@ -120,15 +126,7 @@ if __name__ == '__main__':
     beak.fullblink()
     sleep(1)
     
-    # Run the above functions simultaneously.
-    q = asyncio.Queue()
-    loop = asyncio.get_event_loop()
-    async_tasks = asyncio.gather(
-        eyeblinking(beak, q), 
-        ambientMotion(body, q), 
-        sounds(sounddir, body, beak, q)
-        )
-    loop.run_until_complete(async_tasks)
-    
+    asyncio.run(main(body, beak, sounddir))
+        
     body.body_motor.throttle = 0
     beak.eye_beak_motor.throttle = 0

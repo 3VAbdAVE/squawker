@@ -34,11 +34,6 @@ class EyeBeakController:
         self.eye_beak_motor.throttle = 0
         GPIO.setup(right_eye_switch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.setup(left_eye_switch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-
-    def __del__(self):
-        print("Killing motor and cleaning beak GPIO.")
-        self.eye_beak_motor.throttle = 0
-        GPIO.cleanup()
             
     def get_eye_state(self):
         """Returns whether eyes are open or closed based on the switch positions.
@@ -138,11 +133,6 @@ class BodyController():
         self.body_motor.throttle = 0
         self.timeposition = 0
         GPIO.setup(body_switch, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-            
-    def __del__(self):
-        print("Killing motor and cleaning body GPIO.")
-        self.body_motor.throttle = 0
-        GPIO.cleanup()
         
     def resetbody(self):
         """Runs the body motor forward until the cycle sensor switch closes.
