@@ -202,6 +202,7 @@ class BodyController():
         current = self.timeposition
         
         if dst == current:
+            print("Body position matches request. Not moving.")
             pass
         
         else:
