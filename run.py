@@ -109,7 +109,7 @@ async def sounds(directory, body, beak, q: asyncio.Queue) -> None:
         print(f"\nEnqueuing file {filename}.")
         qitem = {"sound": {"cmd": squawk, "filename" :filename}}
         await q.put(qitem)
-        while body.body_motor.throttle is not 0 or beak.eye_beak_motor.throttle is not 0:
+        while body.body_motor.throttle != 0 or beak.eye_beak_motor.throttle != 0:
             await asyncio.sleep(0)
         await eventdirector(q)
         await q.join()
@@ -135,7 +135,7 @@ async def rfidevent(body, beak, q: asyncio.Queue) -> None:
             filename = choice(files)
             qitem = {"sound": {"cmd": squawk, "filename": filename}}
             await q.put(qitem)
-            while body.body_motor.throttle is not 0 or beak.eye_beak_motor.throttle is not 0:
+            while body.body_motor.throttle != 0 or beak.eye_beak_motor.throttle != 0:
                 await asyncio.sleep(0)
             await eventdirector(q)
             await q.join()
