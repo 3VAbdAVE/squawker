@@ -88,13 +88,12 @@ class Squawk:
         mean = np.mean(np.absolute(np_data))
         avg = float(mean) / 50
         #print(avg)
-        if avg > 2:
-            self.body.body_motor.throttle = 1
-            if avg > 15:
-                self.beak.open_beak()
-            else:
-                self.beak.close_beak()
+        if avg > 15:
+            self.beak.open_beak()
+            if avg > 20:
+                self.body.body_motor.throttle = 1
         else:
+            self.beak.close_beak()
             self.body.body_motor.throttle = 0
         return avg
 

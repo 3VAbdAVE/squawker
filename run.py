@@ -4,16 +4,14 @@
 Requires a path to a directory full of 16bit wave files. 
 Will probably crash on an empty directory."""
 
-import argparse
-import os
+import argparse, os, sys, logging, asyncio
 from functools import partial
 from signal import signal, SIGINT, SIGTERM
 from time import sleep
 from random import randrange, choice
+import RPi.GPIO as GPIO
 import squawker
 from squawker import motors, sound
-import asyncio
-import RPi.GPIO as GPIO
 
 def parseArgs():
     parser = argparse.ArgumentParser(
@@ -72,7 +70,22 @@ async def ambientMotion(body, q: asyncio.Queue) -> None:
         slp = randrange(10,40)
         print(f"Body movement in {str(slp)} seconds.")
         await asyncio.sleep(slp)
-        
+    
+async def eventdirector(q):
+    tasklist = []
+    while not q.empty():
+        task = await q.get()
+        if "sound" in task or "rfid" in task:
+            print('Received sound queue task.')
+            cmd = task.get("sound").get("cmd")
+            filename = task.get("sound").get("filename")
+            cmd.run(filename)
+            print('Releasing sound queue task.')
+            q.task_done()
+        else:
+            print("Unrecognized task, releasing.")
+            q.task_done()
+           
 async def sounds(directory, body, beak, q: asyncio.Queue) -> None:
     """Coroutine that activates a wav file routine on a random interval.
     Ambient motion functions suspend during these activations
@@ -91,28 +104,64 @@ async def sounds(directory, body, beak, q: asyncio.Queue) -> None:
     
     while True:
         slp = randrange(30,60)
+        await q.join()
         filename = choice(files)
         print(f"\nEnqueuing file {filename}.")
-        qitem = {"sound":filename}
+        qitem = {"sound": {"cmd": squawk, "filename" :filename}}
         await q.put(qitem)
         while body.body_motor.throttle is not 0 or beak.eye_beak_motor.throttle is not 0:
-            continue
-        await q.get()
-        squawk.run(filename)
-        print('Releasing queue.')
-        q.task_done()
-        print(f'Sound activation in {str(slp)}\n')
+            await asyncio.sleep(0)
+        await eventdirector(q)
+        await q.join()
+        print(f'Next sound activation in {str(slp)}\n')
         await asyncio.sleep(slp)
         
+async def rfidevent(body, beak, q: asyncio.Queue) -> None:
+    """Simulate an RFID event by updating a file"""
+    directory = '/home/dave/Code/squawker/specialsounds'
+    tmpfile = '/tmp/rfid'
+    files = [os.path.join(directory, file) for file in os.listdir(directory)]
+    
+    with open(tmpfile,'w+') as f:
+        pass
+        
+    while True:
+        f = open(tmpfile,'r')
+        text = f.read()
+        f.close()
+        if 'rfid_event' in text:
+            print("RFID Event detected")
+            squawk = sound.Squawk(beak, body)
+            filename = choice(files)
+            qitem = {"sound": {"cmd": squawk, "filename": filename}}
+            await q.put(qitem)
+            while body.body_motor.throttle is not 0 or beak.eye_beak_motor.throttle is not 0:
+                await asyncio.sleep(0)
+            await eventdirector(q)
+            await q.join()
+            f = open(tmpfile, 'w')
+            f.close()
+            
+        await asyncio.sleep(0)
+    
 async def main(body, beak, sounddir):
     q = asyncio.Queue()
     eye_task = asyncio.create_task(eyeblinking(beak, q))
     body_task = asyncio.create_task(ambientMotion(body, q))
     sound_task = asyncio.create_task(sounds(sounddir, body, beak, q))
-    await asyncio.gather(eye_task, body_task, sound_task)
+    rfid_task = asyncio.create_task(rfidevent(body, beak, q))
+    await asyncio.gather(eye_task, body_task, sound_task, rfid_task)
 
 if __name__ == '__main__':
     args = parseArgs()
+    
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter(fmt="%(asctime)s %(name)s.%(levelname)s: %(message)s", datefmt="%Y.%m.%d %H:%M:%S")
+    handler = logging.StreamHandler(stream=sys.stdout)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    
     sounddir = args.sounddir
     beak = motors.EyeBeakController()
     body = motors.BodyController()
@@ -121,7 +170,8 @@ if __name__ == '__main__':
     
     sleep(1)
     
-    print("Initialize motors to a known position")
+    logger.info("Initialize motors to a known position")
+    # print("Initialize motors to a known position")
     body.resetbody()
     beak.fullblink()
     sleep(1)
