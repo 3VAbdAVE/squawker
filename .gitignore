@@ -1,4 +1,9 @@
 # Byte-compiled / optimized / DLL files
+
+# temp ignores to reduce git archive size
+sounds/
+specialsounds/
+
 __pycache__/
 *.py[cod]
 *$py.class
