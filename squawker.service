@@ -1,18 +1,20 @@
 [Unit]
 Description=Squawkers McCaw Runner
-After=ssh.service
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
-User=pi
-Group=pi
-WorkingDirectory=/opt/squawker
-Restart=always
-RestartSec=10
-PIDFile=/run/squawkers.pid
-ExecStart=/opt/squawker/squawker/run.py /opt/squawker/sounds
-ExexStopPost=/opt/squawker/killmotors.py
+WorkingDirectory=%h
+Restart=no
+ExecStart=%h/squawker/.venv/bin/python %h/squawker/run.py %h/squawker/sounds
+ExecStopPost=%h/squawker/killmotors.py
+NoNewPrivileges=true
+PrivateTmp=true
+SyslogIdentifier=squawker
+StandardError=journal
 StandardOutput=journal
 
 [Install]
 WantedBy=default.target
+

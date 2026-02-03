@@ -56,7 +56,7 @@ def run_action(body, action):
     body.setbodyPosition(dst)
     sleep(0.3)
     whichside = [i for i in actiontimes if actiontimes[i] == dst ][0]
-    otherside = [i for i in actiontimes if i is not whichside][0]
+    otherside = [i for i in actiontimes if i != whichside][0]
     body.setbodyPosition(actiontimes.get(otherside))
     
 def rnd_action(body):

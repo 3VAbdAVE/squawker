@@ -96,7 +96,7 @@ class EyeBeakController:
         Returns:
             str: state of the eyes after the motor stops.
         """
-        while self.get_eye_state() is not state:
+        while self.get_eye_state() != state:
             self.halfblink()
         return self.get_eye_state()
             
